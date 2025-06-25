@@ -18,6 +18,12 @@
               </button>
               
               <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                <router-link v-if="user?.is_superuser" to="/admin/plans" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  {{ $t('admin.plans.title') }}
+                </router-link>
+                <router-link v-if="!user?.is_superuser" to="/subscription" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  {{ $t('dashboard.subscription.title') }}
+                </router-link>
                 <button @click="logout" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   {{ $t('auth.logout') }}
                 </button>
@@ -73,8 +79,8 @@
           </div>
         </div>
 
-        <!-- Subscription Card -->
-        <div class="lg:col-span-2">
+        <!-- Subscription Card (only for regular users) -->
+        <div v-if="!user?.is_superuser" class="lg:col-span-2">
           <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
               <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
@@ -140,6 +146,67 @@
                             :disabled="subscribing"
                             class="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50">
                       {{ subscribing ? $t('dashboard.subscription.subscribing') : $t('dashboard.subscription.subscribe') }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Panel (only for superusers) -->
+        <div v-if="user?.is_superuser" class="lg:col-span-2">
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+              <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                {{ $t('admin.panel.title') }}
+              </h3>
+              
+              <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-lg font-medium text-gray-900">
+                        {{ $t('admin.plans.title') }}
+                      </h4>
+                      <p class="text-sm text-gray-600">
+                        {{ $t('admin.plans.description') }}
+                      </p>
+                    </div>
+                    <router-link to="/admin/plans" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      {{ $t('admin.plans.manage') }}
+                    </router-link>
+                  </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-lg font-medium text-gray-900">
+                        {{ $t('admin.users.title') }}
+                      </h4>
+                      <p class="text-sm text-gray-600">
+                        {{ $t('admin.users.description') }}
+                      </p>
+                    </div>
+                    <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
+                      {{ $t('admin.comingSoon') }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-lg font-medium text-gray-900">
+                        {{ $t('admin.analytics.title') }}
+                      </h4>
+                      <p class="text-sm text-gray-600">
+                        {{ $t('admin.analytics.description') }}
+                      </p>
+                    </div>
+                    <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
+                      {{ $t('admin.comingSoon') }}
                     </button>
                   </div>
                 </div>

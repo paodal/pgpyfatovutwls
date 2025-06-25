@@ -5,6 +5,7 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Subscription from '../views/Subscription.vue'
+import AdminPlans from '../views/AdminPlans.vue'
 
 const routes = [
   {
@@ -35,6 +36,12 @@ const routes = [
     name: 'Subscription',
     component: Subscription,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/plans',
+    name: 'AdminPlans',
+    component: AdminPlans,
+    meta: { requiresAuth: true, requiresSuperuser: true }
   }
 ]
 
@@ -50,6 +57,8 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    next('/dashboard')
+  } else if (to.meta.requiresSuperuser && !authStore.user?.is_superuser) {
     next('/dashboard')
   } else {
     next()

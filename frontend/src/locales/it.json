@@ -15,16 +15,27 @@
     "login": "Accedi",
     "logout": "Esci",
     "register": "Registrati",
+    "signUp": "Registrati",
     "login_title": "Accedi al tuo account",
     "register_title": "Crea un nuovo account",
     "email": "Email",
+    "emailPlaceholder": "Il tuo indirizzo email",
     "password": "Password", 
+    "passwordPlaceholder": "La tua password",
+    "confirmPassword": "Conferma password",
+    "confirmPasswordPlaceholder": "Conferma la tua password",
     "full_name": "Nome completo",
+    "fullName": "Nome completo",
+    "fullNamePlaceholder": "Il tuo nome completo",
     "language": "Lingua",
     "no_account": "Non hai un account?",
+    "noAccount": "Non hai un account?",
+    "hasAccount": "Hai già un account?",
     "have_account": "Hai già un account?",
     "login_link": "Accedi qui",
-    "register_link": "Registrati qui"
+    "register_link": "Registrati qui",
+    "loggingIn": "Accesso in corso...",
+    "signingUp": "Registrazione in corso..."
   },
   "home": {
     "hero": {
@@ -120,5 +131,91 @@
       "priority_support": "Supporto prioritario",
       "advanced_features": "Funzionalità avanzate"
     }
+  },
+  "admin": {
+    "panel": {
+      "title": "Pannello Amministratore"
+    },
+    "plans": {
+      "title": "Gestione Piani",
+      "description": "Gestisci i piani di abbonamento disponibili",
+      "manage": "Gestisci",
+      "createNew": "Crea nuovo piano",
+      "editPlan": "Modifica piano",
+      "name": "Nome",
+      "type": "Tipo",
+      "price": "Prezzo",
+      "billingDays": "Giorni di fatturazione",
+      "maxProjects": "Progetti massimi",
+      "maxStorage": "Storage massimo",
+      "prioritySupport": "Supporto prioritario",
+      "advancedFeatures": "Funzionalità avanzate",
+      "active": "Attivo",
+      "inactive": "Inattivo",
+      "projects": "Progetti",
+      "storage": "Storage",
+      "support": "Supporto",
+      "advanced": "Avanzate",
+      "yes": "Sì",
+      "no": "No",
+      "edit": "Modifica",
+      "activate": "Attiva",
+      "deactivate": "Disattiva",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "saving": "Salvataggio..."
+    },
+    "users": {
+      "title": "Gestione Utenti",
+      "description": "Gestisci gli utenti registrati"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Visualizza statistiche e metriche"
+    },
+    "comingSoon": "Prossimamente"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Benvenuto",
+    "subtitle": "Ecco una panoramica del tuo account.",
+    "profile": {
+      "title": "Profilo",
+      "active": "Attivo",
+      "inactive": "Inattivo",
+      "superuser": "Super Admin"
+    },
+    "subscription": {
+      "title": "Abbonamento",
+      "status": "Stato",
+      "noSubscription": "Nessun abbonamento",
+      "upgradeMessage": "Aggiorna il tuo piano per sbloccare tutte le funzionalità",
+      "subscribe": "Sottoscrivi",
+      "subscribing": "Sottoscrizione...",
+      "cancel": "Annulla",
+      "cancelling": "Annullamento..."
+    },
+    "subscription_status": "Stato abbonamento",
+    "current_plan": "Piano attuale",
+    "no_subscription": "Nessun abbonamento attivo", 
+    "manage_subscription": "Gestisci abbonamento",
+    "stats": {
+      "projects": "Progetti",
+      "storage_used": "Storage utilizzato",
+      "last_activity": "Ultima attività",
+      "today": "Oggi"
+    },
+    "quick_actions": "Azioni rapide",
+    "actions": {
+      "new_project": "Nuovo progetto",
+      "new_project_desc": "Crea un nuovo progetto",
+      "view_docs": "Documentazione",
+      "view_docs_desc": "Consulta la documentazione",
+      "get_support": "Supporto",
+      "get_support_desc": "Ottieni assistenza"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard"
   }
 }
