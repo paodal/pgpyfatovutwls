@@ -77,9 +77,9 @@ nano .env
 docker compose up -d
 
 # The application will be available at:
-# - Frontend: http://localhost:3000
-# - Backend API: http://localhost:8000
-# - API Documentation: http://localhost:8000/docs
+# - Backend API: http://localhost:8003
+# - API Documentation: http://localhost:8003/docs
+# - Frontend: http://localhost:8004
 # - Grafana: http://localhost:3001 (admin/admin)
 # - Prometheus: http://localhost:9090
 ```

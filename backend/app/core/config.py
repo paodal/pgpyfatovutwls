@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     SUPER_ADMIN_EMAIL: str = "paodal@gmail.com"
     
     # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8080"]
+    BACKEND_CORS_ORIGINS: list = ["http://localhost:8004", "http://localhost:3000"]
     
     class Config:
         env_file = ".env"
