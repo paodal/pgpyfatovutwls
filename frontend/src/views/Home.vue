@@ -11,12 +11,12 @@
             {{ $t('home.hero.subtitle') }}
           </p>
           <div class="mt-10 flex items-center justify-center gap-x-6">
-            <router-link to="/register" class="btn btn-primary text-lg px-8 py-3">
+            <button @click="showRegisterModal = true" class="btn btn-primary text-lg px-8 py-3">
               {{ $t('home.hero.cta') }}
-            </router-link>
-            <a href="#features" class="text-sm font-semibold leading-6 text-gray-900">
-              {{ $t('home.hero.learn_more') }} <span aria-hidden="true">→</span>
-            </a>
+            </button>
+            <button @click="showLoginModal = true" class="text-sm font-semibold leading-6 text-gray-900 hover:underline">
+              {{ $t('auth.login') }} <span aria-hidden="true">→</span>
+            </button>
           </div>
         </div>
       </div>
@@ -117,9 +117,9 @@
                 {{ $t('home.pricing.free.feature2') }}
               </li>
             </ul>
-            <router-link to="/register" class="mt-8 block w-full btn btn-secondary text-center">
+            <button @click="showRegisterModal = true" class="mt-8 block w-full btn btn-secondary text-center">
               {{ $t('home.pricing.free.cta') }}
-            </router-link>
+            </button>
           </div>
           
           <!-- Premium Plan -->
@@ -150,16 +150,45 @@
                 {{ $t('home.pricing.premium.feature3') }}
               </li>
             </ul>
-            <router-link to="/register" class="mt-8 block w-full bg-white text-primary-600 hover:bg-gray-50 btn text-center">
+            <button @click="showRegisterModal = true" class="mt-8 block w-full bg-white text-primary-600 hover:bg-gray-50 btn text-center">
               {{ $t('home.pricing.premium.cta') }}
-            </router-link>
+            </button>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Login Modal -->
+    <LoginModal 
+      :is-open="showLoginModal" 
+      @close="showLoginModal = false" 
+      @switch-to-register="switchToRegister"
+    />
+    
+    <!-- Register Modal -->
+    <RegisterModal 
+      :is-open="showRegisterModal" 
+      @close="showRegisterModal = false" 
+      @switch-to-login="switchToLogin"
+    />
   </div>
 </template>
 
 <script setup>
-// Component logic can be added here if needed
+import { ref } from 'vue'
+import LoginModal from '../components/LoginModal.vue'
+import RegisterModal from '../components/RegisterModal.vue'
+
+const showLoginModal = ref(false)
+const showRegisterModal = ref(false)
+
+const switchToRegister = () => {
+  showLoginModal.value = false
+  showRegisterModal.value = true
+}
+
+const switchToLogin = () => {
+  showRegisterModal.value = false
+  showLoginModal.value = true
+}
 </script>
