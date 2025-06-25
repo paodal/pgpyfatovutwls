@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database
-    DATABASE_URL: str = "postgres://pgpyfatovutwls_user:aquila-vita-casa@localhost:5432/pgpyfatovutwls_db"
+    DATABASE_URL: str = "postgres://pgpyfatovutwls_user:aquila-vita-casa@host.docker.internal:5432/pgpyfatovutwls_db"
     
     # Security
     SECRET_KEY: str = "porta-terra-cielo-ponte-mare-stella-sole-luna"

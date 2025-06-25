@@ -10,6 +10,7 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 from .core.config import settings, TORTOISE_ORM
+from .core.init_db import init_db
 from .routers import auth, subscriptions, webhooks
 
 # Configure logging
@@ -127,44 +128,16 @@ register_tortoise(
 )
 
 
+# Startup event to initialize default data
 @app.on_event("startup")
 async def startup_event():
-    """Initialize application on startup"""
-    logger.info("Starting pgpyfatovutwls API server")
-    
-    # Create default subscription plans
-    from .models.subscription import SubscriptionPlan, PlanType, CurrencyCode
-    from decimal import Decimal
-    
-    # Create Free plan
-    free_plan = await SubscriptionPlan.get_or_none(plan_type=PlanType.FREE)
-    if not free_plan:
-        await SubscriptionPlan.create(
-            name="Free",
-            plan_type=PlanType.FREE,
-            price=Decimal('0.00'),
-            currency_code=CurrencyCode.EUR,
-            max_projects=1,
-            max_storage_gb=1,
-            has_priority_support=False,
-            has_advanced_features=False
-        )
-        logger.info("Created Free subscription plan")
-    
-    # Create Premium plan
-    premium_plan = await SubscriptionPlan.get_or_none(plan_type=PlanType.PREMIUM)
-    if not premium_plan:
-        await SubscriptionPlan.create(
-            name="Premium",
-            plan_type=PlanType.PREMIUM,
-            price=Decimal('29.99'),
-            currency_code=CurrencyCode.EUR,
-            max_projects=10,
-            max_storage_gb=50,
-            has_priority_support=True,
-            has_advanced_features=True
-        )
-        logger.info("Created Premium subscription plan")
+    """Initialize database with default data on startup"""
+    try:
+        await init_db()
+        logger.info("Application startup completed successfully")
+    except Exception as e:
+        logger.error(f"Error during startup: {e}")
+        raise
 
 
 @app.on_event("shutdown")

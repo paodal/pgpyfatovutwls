@@ -31,7 +31,7 @@ export const useAuthStore = defineStore('auth', () => {
       formData.append('username', credentials.email)
       formData.append('password', credentials.password)
       
-      const response = await axios.post('/api/v1/auth/token', formData)
+      const response = await axios.post('/v1/auth/token', formData)
       
       setAuthData(response.data)
       router.push('/dashboard')
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('/api/v1/auth/register', userData)
+      const response = await axios.post('/v1/auth/register', userData)
       
       // Auto-login after registration
       const loginResult = await login({
@@ -72,7 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
       // Set axios header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
       
-      const response = await axios.get('/api/v1/auth/me')
+      const response = await axios.get('/v1/auth/me')
       user.value = response.data
     } catch (error) {
       // Token is invalid, clear auth data
@@ -82,7 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await axios.put('/api/v1/auth/me', profileData)
+      const response = await axios.put('/v1/auth/me', profileData)
       user.value = response.data
       return { success: true }
     } catch (error) {

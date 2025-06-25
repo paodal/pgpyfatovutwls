@@ -10,7 +10,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   const fetchPlans = async () => {
     try {
       loading.value = true
-      const response = await axios.get('/api/v1/subscriptions/plans')
+      const response = await axios.get('/v1/subscriptions/plans')
       plans.value = response.data
     } catch (error) {
       console.error('Failed to fetch subscription plans:', error)
@@ -22,7 +22,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   const fetchCurrentSubscription = async () => {
     try {
       loading.value = true
-      const response = await axios.get('/api/v1/subscriptions/current')
+      const response = await axios.get('/v1/subscriptions/current')
       currentSubscription.value = response.data
     } catch (error) {
       console.error('Failed to fetch current subscription:', error)
@@ -33,7 +33,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
   const createCheckout = async (planId) => {
     try {
-      const response = await axios.post(`/api/v1/subscriptions/checkout/${planId}`)
+      const response = await axios.post(`/v1/subscriptions/checkout/${planId}`)
       
       // Redirect to Lemon Squeezy checkout
       window.location.href = response.data.checkout_url
@@ -47,7 +47,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
   const cancelSubscription = async (subscriptionId) => {
     try {
-      await axios.post(`/api/v1/subscriptions/cancel/${subscriptionId}`)
+      await axios.post(`/v1/subscriptions/cancel/${subscriptionId}`)
       
       // Refresh current subscription
       await fetchCurrentSubscription()

@@ -6,7 +6,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgres://pgpyfatovutwls_user:aquila-vita-casa@localhost:5432/pgpyfatovutwls_db
+      - DATABASE_URL=postgres://pgpyfatovutwls_user:aquila-vita-casa@host.docker.internal:5432/pgpyfatovutwls_db
       - SECRET_KEY=porta-terra-cielo-ponte-mare-stella-sole-luna
       - DEBUG=true
       - SMTP_PASSWORD=${GMAIL_PASSPHRASE:-}
@@ -14,7 +14,6 @@ services:
       - SENTRY_DSN=${SENTRY_DSN:-}
     ports:
       - "8003:8000"
-    network_mode: "host"
     volumes:
       - ./backend:/app
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
