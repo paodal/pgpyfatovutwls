@@ -19,7 +19,7 @@ A modern, scalable web application boilerplate that provides authentication, sub
 ## 📋 Tech Stack
 
 ### Backend
-- **Python 3.13** - Modern Python runtime
+- **Python 3.12** - Stable Python runtime
 - **FastAPI** - High-performance async web framework
 - **Tortoise ORM** - Async ORM for database operations
 - **PostgreSQL 16** - Reliable database with timezone support
@@ -54,7 +54,7 @@ A modern, scalable web application boilerplate that provides authentication, sub
 
 - **Docker** and **Docker Compose**
 - **Node.js 18+** (for frontend development)
-- **Python 3.13+** (for backend development)
+- **Python 3.12+** (for backend development)
 - **Git**
 
 ### 1. Clone and Setup
