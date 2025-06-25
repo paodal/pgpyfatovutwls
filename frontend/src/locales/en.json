@@ -1,0 +1,124 @@
+{
+  "common": {
+    "loading": "Loading",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "subscription": "Subscription"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "login_title": "Sign in to your account",
+    "register_title": "Create a new account",
+    "email": "Email",
+    "password": "Password",
+    "full_name": "Full name",
+    "language": "Language",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "login_link": "Sign in here",
+    "register_link": "Register here"
+  },
+  "home": {
+    "hero": {
+      "title": "Your complete platform",
+      "subtitle": "A modern and powerful solution to manage all your projects in one place.",
+      "cta": "Get started",
+      "learn_more": "Learn more"
+    },
+    "features": {
+      "title": "Everything you need",
+      "subtitle": "A complete suite of tools for productivity and collaboration.",
+      "feature1": {
+        "title": "Fast and Reliable",
+        "description": "Modern technologies for exceptional performance and guaranteed security."
+      },
+      "feature2": {
+        "title": "Advanced Security",
+        "description": "Your data is protected with the most advanced security technologies."
+      },
+      "feature3": {
+        "title": "Advanced Analytics",
+        "description": "Monitor performance and optimize your processes with detailed analytics."
+      }
+    },
+    "pricing": {
+      "title": "Simple and transparent pricing",
+      "subtitle": "Choose the plan that best fits your needs.",
+      "month": "month",
+      "free": {
+        "name": "Free",
+        "description": "Perfect to get started",
+        "feature1": "1 project",
+        "feature2": "1 GB storage",
+        "cta": "Start free"
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "For demanding professionals",
+        "feature1": "10 projects",
+        "feature2": "50 GB storage",
+        "feature3": "Priority support",
+        "cta": "Start trial"
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "subtitle": "Here's an overview of your account.",
+    "subscription_status": "Subscription status",
+    "current_plan": "Current plan",
+    "no_subscription": "No active subscription",
+    "manage_subscription": "Manage subscription",
+    "stats": {
+      "projects": "Projects",
+      "storage_used": "Storage used",
+      "last_activity": "Last activity",
+      "today": "Today"
+    },
+    "quick_actions": "Quick actions",
+    "actions": {
+      "new_project": "New project",
+      "new_project_desc": "Create a new project",
+      "view_docs": "Documentation",
+      "view_docs_desc": "View documentation",
+      "get_support": "Support",
+      "get_support_desc": "Get assistance"
+    }
+  },
+  "subscription": {
+    "title": "Subscription management",
+    "subtitle": "Manage your plan and billing.",
+    "current_plan": "Current plan",
+    "available_plans": "Available plans",
+    "month": "month",
+    "popular": "Popular",
+    "upgrade": "Upgrade to this plan",
+    "cancel": "Cancel subscription",
+    "cancel_confirm": "Are you sure you want to cancel your subscription?",
+    "free_plan": "Free plan",
+    "no_active_plan": "No active plan",
+    "billing_info": "Billing information",
+    "next_billing": "Next billing",
+    "billing_period": "Billing period",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
+    "features": {
+      "projects": "{count} projects",
+      "storage": "{gb} GB storage",
+      "priority_support": "Priority support",
+      "advanced_features": "Advanced features"
+    }
+  }
+}

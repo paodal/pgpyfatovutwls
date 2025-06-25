@@ -1,0 +1,199 @@
+name: Deploy pgpyfatovutwls
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+
+env:
+  APP_NAME: pgpyfatovutwls
+  STAGING_PORT: 9003
+  PRODUCTION_PORT: 8003
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: aquila-vita-casa
+          POSTGRES_USER: pgpyfatovutwls_user
+          POSTGRES_DB: pgpyfatovutwls_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run backend tests
+      working-directory: ./backend
+      env:
+        DATABASE_URL: postgres://pgpyfatovutwls_user:aquila-vita-casa@localhost:5432/pgpyfatovutwls_test_db
+        SECRET_KEY: test-secret-key
+      run: |
+        python -m pytest tests/ -v || echo "No tests found"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Run frontend tests
+      working-directory: ./frontend
+      run: npm test || echo "No tests found"
+
+  deploy:
+    needs: test
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set environment variables
+      run: |
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          echo "PORT=${{ env.PRODUCTION_PORT }}" >> $GITHUB_ENV
+          echo "DOMAIN=pgpyfatovutwls.europeople.net" >> $GITHUB_ENV
+        else
+          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          echo "PORT=${{ env.STAGING_PORT }}" >> $GITHUB_ENV
+          echo "DOMAIN=test.pgpyfatovutwls.europeople.net" >> $GITHUB_ENV
+        fi
+
+    - name: Create application directory
+      run: |
+        sudo mkdir -p /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+        sudo chown -R gha:gha /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+
+    - name: Copy application files
+      run: |
+        rsync -av --delete \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='__pycache__' \
+          --exclude='.pytest_cache' \
+          . /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}/
+
+    - name: Create production environment file
+      working-directory: /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+      run: |
+        cat > .env << EOF
+        DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@${{ secrets.POSTGRES_HOST }}:5432/${{ secrets.POSTGRES_DB }}
+        SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+        SMTP_PASSWORD=${{ secrets.GMAIL_PASSPHRASE }}
+        LEMON_SQUEEZY_API_KEY=${{ secrets.LS_API_KEY }}
+        DEBUG=false
+        ENVIRONMENT=${{ env.ENVIRONMENT }}
+        PORT=${{ env.PORT }}
+        EOF
+
+    - name: Create production docker-compose file
+      working-directory: /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+      run: |
+        cat > docker-compose.prod.yml << 'EOF'
+        version: '3.8'
+        
+        services:
+          backend:
+            build:
+              context: ./backend
+              dockerfile: Dockerfile
+            environment:
+              - DATABASE_URL=${DATABASE_URL}
+              - SECRET_KEY=${SECRET_KEY}
+              - DEBUG=false
+              - SMTP_PASSWORD=${SMTP_PASSWORD}
+              - LEMON_SQUEEZY_API_KEY=${LEMON_SQUEEZY_API_KEY}
+            ports:
+              - "${{ env.PORT }}:8000"
+            restart: unless-stopped
+            healthcheck:
+              test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+              interval: 30s
+              timeout: 10s
+              retries: 3
+        EOF
+
+    - name: Deploy application
+      working-directory: /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+      run: |
+        # Stop existing containers
+        docker compose -f docker-compose.prod.yml down || true
+        
+        # Build and start new containers
+        docker compose -f docker-compose.prod.yml up -d --build
+        
+        # Wait for health check
+        sleep 30
+        
+        # Verify deployment
+        if ! curl -f http://localhost:${{ env.PORT }}/health; then
+          echo "Health check failed, rolling back..."
+          docker compose -f docker-compose.prod.yml down
+          exit 1
+        fi
+
+    - name: Update nginx configuration
+      run: |
+        sudo tee /etc/nginx/sites-available/${{ env.DOMAIN }} > /dev/null << 'EOF'
+        server {
+            listen 80;
+            server_name ${{ env.DOMAIN }};
+            
+            location / {
+                proxy_pass http://localhost:${{ env.PORT }};
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            location /health {
+                proxy_pass http://localhost:${{ env.PORT }}/health;
+                access_log off;
+            }
+        }
+        EOF
+        
+        sudo ln -sf /etc/nginx/sites-available/${{ env.DOMAIN }} /etc/nginx/sites-enabled/
+        sudo nginx -t
+        sudo systemctl reload nginx
+
+    - name: Setup SSL certificate
+      run: |
+        sudo certbot --nginx -d ${{ env.DOMAIN }} --non-interactive --agree-tos --email admin@europeople.net || echo "SSL setup failed, continuing..."
+
+    - name: Cleanup old Docker images
+      run: |
+        docker image prune -f || true

@@ -1,0 +1,124 @@
+{
+  "common": {
+    "loading": "Caricamento",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "close": "Chiudi"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "subscription": "Abbonamento"
+  },
+  "auth": {
+    "login": "Accedi",
+    "logout": "Esci",
+    "register": "Registrati",
+    "login_title": "Accedi al tuo account",
+    "register_title": "Crea un nuovo account",
+    "email": "Email",
+    "password": "Password", 
+    "full_name": "Nome completo",
+    "language": "Lingua",
+    "no_account": "Non hai un account?",
+    "have_account": "Hai già un account?",
+    "login_link": "Accedi qui",
+    "register_link": "Registrati qui"
+  },
+  "home": {
+    "hero": {
+      "title": "La tua piattaforma completa",
+      "subtitle": "Una soluzione moderna e potente per gestire tutti i tuoi progetti in un unico posto.",
+      "cta": "Inizia ora",
+      "learn_more": "Scopri di più"
+    },
+    "features": {
+      "title": "Tutto quello che ti serve",
+      "subtitle": "Una suite completa di strumenti per la produttività e la collaborazione.",
+      "feature1": {
+        "title": "Veloce e Affidabile",
+        "description": "Tecnologie moderne per prestazioni eccezionali e sicurezza garantita."
+      },
+      "feature2": {
+        "title": "Sicurezza Avanzata", 
+        "description": "I tuoi dati sono protetti con le più avanzate tecnologie di sicurezza."
+      },
+      "feature3": {
+        "title": "Analytics Avanzate",
+        "description": "Monitora le performance e ottimizza i tuoi processi con analisi dettagliate."
+      }
+    },
+    "pricing": {
+      "title": "Prezzi semplici e trasparenti",
+      "subtitle": "Scegli il piano più adatto alle tue esigenze.",
+      "month": "mese",
+      "free": {
+        "name": "Gratuito",
+        "description": "Perfetto per iniziare",
+        "feature1": "1 progetto",
+        "feature2": "1 GB di storage",
+        "cta": "Inizia gratis"
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Per professionisti esigenti",
+        "feature1": "10 progetti",
+        "feature2": "50 GB di storage", 
+        "feature3": "Supporto prioritario",
+        "cta": "Inizia la prova"
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Benvenuto",
+    "subtitle": "Ecco una panoramica del tuo account.",
+    "subscription_status": "Stato abbonamento",
+    "current_plan": "Piano attuale",
+    "no_subscription": "Nessun abbonamento attivo", 
+    "manage_subscription": "Gestisci abbonamento",
+    "stats": {
+      "projects": "Progetti",
+      "storage_used": "Storage utilizzato",
+      "last_activity": "Ultima attività",
+      "today": "Oggi"
+    },
+    "quick_actions": "Azioni rapide",
+    "actions": {
+      "new_project": "Nuovo progetto",
+      "new_project_desc": "Crea un nuovo progetto",
+      "view_docs": "Documentazione",
+      "view_docs_desc": "Consulta la documentazione",
+      "get_support": "Supporto",
+      "get_support_desc": "Ottieni assistenza"
+    }
+  },
+  "subscription": {
+    "title": "Gestione abbonamento",
+    "subtitle": "Gestisci il tuo piano e la fatturazione.",
+    "current_plan": "Piano attuale",
+    "available_plans": "Piani disponibili",
+    "month": "mese",
+    "popular": "Popolare",
+    "upgrade": "Passa a questo piano",
+    "cancel": "Annulla abbonamento",
+    "cancel_confirm": "Sei sicuro di voler annullare l'abbonamento?",
+    "free_plan": "Piano gratuito",
+    "no_active_plan": "Nessun piano attivo",
+    "billing_info": "Informazioni di fatturazione",
+    "next_billing": "Prossima fatturazione",
+    "billing_period": "Periodo di fatturazione",
+    "status": {
+      "active": "Attivo",
+      "inactive": "Inattivo",
+      "cancelled": "Annullato",
+      "expired": "Scaduto"
+    },
+    "features": {
+      "projects": "{count} progetti",
+      "storage": "{gb} GB di storage",
+      "priority_support": "Supporto prioritario",
+      "advanced_features": "Funzionalità avanzate"
+    }
+  }
+}

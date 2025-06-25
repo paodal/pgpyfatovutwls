@@ -1,0 +1,124 @@
+{
+  "common": {
+    "loading": "Cargando",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "subscription": "Suscripción"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "register": "Registrarse",
+    "login_title": "Inicia sesión en tu cuenta",
+    "register_title": "Crear una nueva cuenta",
+    "email": "Email",
+    "password": "Contraseña",
+    "full_name": "Nombre completo",
+    "language": "Idioma",
+    "no_account": "¿No tienes una cuenta?",
+    "have_account": "¿Ya tienes una cuenta?",
+    "login_link": "Inicia sesión aquí",
+    "register_link": "Regístrate aquí"
+  },
+  "home": {
+    "hero": {
+      "title": "Tu plataforma completa",
+      "subtitle": "Una solución moderna y potente para gestionar todos tus proyectos en un solo lugar.",
+      "cta": "Comenzar",
+      "learn_more": "Saber más"
+    },
+    "features": {
+      "title": "Todo lo que necesitas",
+      "subtitle": "Una suite completa de herramientas para la productividad y colaboración.",
+      "feature1": {
+        "title": "Rápido y Confiable",
+        "description": "Tecnologías modernas para un rendimiento excepcional y seguridad garantizada."
+      },
+      "feature2": {
+        "title": "Seguridad Avanzada",
+        "description": "Tus datos están protegidos con las tecnologías de seguridad más avanzadas."
+      },
+      "feature3": {
+        "title": "Análisis Avanzados",
+        "description": "Monitoriza el rendimiento y optimiza tus procesos con análisis detallados."
+      }
+    },
+    "pricing": {
+      "title": "Precios simples y transparentes",
+      "subtitle": "Elige el plan que mejor se adapte a tus necesidades.",
+      "month": "mes",
+      "free": {
+        "name": "Gratis",
+        "description": "Perfecto para empezar",
+        "feature1": "1 proyecto",
+        "feature2": "1 GB de almacenamiento",
+        "cta": "Comenzar gratis"
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Para profesionales exigentes",
+        "feature1": "10 proyectos",
+        "feature2": "50 GB de almacenamiento",
+        "feature3": "Soporte prioritario",
+        "cta": "Comenzar prueba"
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Bienvenido",
+    "subtitle": "Aquí tienes una visión general de tu cuenta.",
+    "subscription_status": "Estado de suscripción",
+    "current_plan": "Plan actual",
+    "no_subscription": "Sin suscripción activa",
+    "manage_subscription": "Gestionar suscripción",
+    "stats": {
+      "projects": "Proyectos",
+      "storage_used": "Almacenamiento usado",
+      "last_activity": "Última actividad",
+      "today": "Hoy"
+    },
+    "quick_actions": "Acciones rápidas",
+    "actions": {
+      "new_project": "Nuevo proyecto",
+      "new_project_desc": "Crear un nuevo proyecto",
+      "view_docs": "Documentación",
+      "view_docs_desc": "Ver documentación",
+      "get_support": "Soporte",
+      "get_support_desc": "Obtener asistencia"
+    }
+  },
+  "subscription": {
+    "title": "Gestión de suscripción",
+    "subtitle": "Gestiona tu plan y facturación.",
+    "current_plan": "Plan actual",
+    "available_plans": "Planes disponibles",
+    "month": "mes",
+    "popular": "Popular",
+    "upgrade": "Cambiar a este plan",
+    "cancel": "Cancelar suscripción",
+    "cancel_confirm": "¿Estás seguro de que quieres cancelar tu suscripción?",
+    "free_plan": "Plan gratuito",
+    "no_active_plan": "Sin plan activo",
+    "billing_info": "Información de facturación",
+    "next_billing": "Próxima facturación",
+    "billing_period": "Período de facturación",
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "cancelled": "Cancelado",
+      "expired": "Expirado"
+    },
+    "features": {
+      "projects": "{count} proyectos",
+      "storage": "{gb} GB de almacenamiento",
+      "priority_support": "Soporte prioritario",
+      "advanced_features": "Funciones avanzadas"
+    }
+  }
+}
