@@ -46,6 +46,19 @@ class LemonSqueezy:
         custom_data: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
         """Create checkout session"""
+        
+        # Return mock data for test variant IDs
+        if variant_id.startswith("test_"):
+            logger.info(f"Using test variant ID: {variant_id}")
+            return {
+                "data": {
+                    "type": "checkouts",
+                    "attributes": {
+                        "url": f"https://test-checkout-url.com?variant={variant_id}&email={user_email}"
+                    }
+                }
+            }
+        
         if not self.api_key:
             logger.warning("Lemon Squeezy API key not configured")
             return None

@@ -75,16 +75,14 @@ async def create_default_plans():
             # Create Free plan
             await SubscriptionPlan.create(
                 name="Free",
-                description="Perfect for getting started",
+                plan_type="free",
                 price=0.00,
-                currency="EUR",
-                interval="month",
-                features={
-                    "projects": 1,
-                    "storage_gb": 1,
-                    "priority_support": False,
-                    "advanced_features": False
-                },
+                currency_code="EUR",
+                billing_period_days=30,
+                max_projects=1,
+                max_storage_gb=1,
+                has_priority_support=False,
+                has_advanced_features=False,
                 is_active=True,
                 lemon_squeezy_product_id=None,
                 lemon_squeezy_variant_id=None
@@ -93,19 +91,17 @@ async def create_default_plans():
             # Create Premium plan  
             await SubscriptionPlan.create(
                 name="Premium",
-                description="For demanding professionals",
+                plan_type="premium",
                 price=29.00,
-                currency="EUR", 
-                interval="month",
-                features={
-                    "projects": 10,
-                    "storage_gb": 50,
-                    "priority_support": True,
-                    "advanced_features": True
-                },
+                currency_code="EUR", 
+                billing_period_days=30,
+                max_projects=10,
+                max_storage_gb=50,
+                has_priority_support=True,
+                has_advanced_features=True,
                 is_active=True,
-                lemon_squeezy_product_id=None,  # Set these when configuring Lemon Squeezy
-                lemon_squeezy_variant_id=None
+                lemon_squeezy_product_id="test_product_123",  # Test IDs for development
+                lemon_squeezy_variant_id="test_variant_456"
             )
             
             logger.info("Default subscription plans created")

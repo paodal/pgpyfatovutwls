@@ -133,6 +133,9 @@ register_tortoise(
 async def startup_event():
     """Initialize database with default data on startup"""
     try:
+        # Wait a bit for Tortoise to be ready
+        import asyncio
+        await asyncio.sleep(1)
         await init_db()
         logger.info("Application startup completed successfully")
     except Exception as e:
