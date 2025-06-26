@@ -12,11 +12,14 @@
           <div class="flex items-center space-x-4">
             <LanguageSelector />
             
-            <div v-if="authStore.isAuthenticated" class="flex items-center space-x-4">
+            <div v-if="isAuthenticated && userLoaded" class="flex items-center space-x-4">
               <router-link to="/dashboard" class="text-gray-700 hover:text-primary-600">
                 {{ $t('nav.dashboard') }}
               </router-link>
-              <router-link to="/subscription" class="text-gray-700 hover:text-primary-600">
+              <router-link v-if="user && user.is_superuser" to="/admin/plans" class="text-gray-700 hover:text-primary-600">
+                {{ $t('admin.plans.title') }}
+              </router-link>
+              <router-link v-else to="/subscription" class="text-gray-700 hover:text-primary-600">
                 {{ $t('nav.subscription') }}
               </router-link>
               <button @click="logout" class="btn btn-secondary">
@@ -44,14 +47,22 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useAuthStore } from './stores/auth'
 import LanguageSelector from './components/LanguageSelector.vue'
 
 const authStore = useAuthStore()
 
-onMounted(() => {
-  authStore.checkAuthStatus()
+// Make user reactive for template
+const user = computed(() => authStore.user)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const userLoaded = ref(false)
+
+onMounted(async () => {
+  if (authStore.token) {
+    await authStore.checkAuthStatus()
+  }
+  userLoaded.value = true
 })
 
 const logout = () => {
