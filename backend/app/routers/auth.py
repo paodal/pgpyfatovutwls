@@ -27,6 +27,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_verified: bool
+    is_superuser: bool
     language: str
     
     class Config:
