@@ -5,25 +5,40 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-6">
           <div class="flex items-center">
-            <h1 class="text-2xl font-bold text-gray-900">{{ $t('dashboard.title') }}</h1>
+            <router-link to="/" class="text-2xl font-bold text-gray-900 hover:text-gray-700">
+              {{ $t('dashboard.title') }}
+            </router-link>
           </div>
+          
+          <div class="flex items-center justify-center flex-1">
+            <span class="text-xl font-bold text-primary-600">pgpyfatovutwls</span>
+          </div>
+          
           <div class="flex items-center space-x-4">
             <LanguageSelector />
             <div class="relative">
               <button @click="showUserMenu = !showUserMenu" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
-                <span>{{ user?.full_name || user?.email }}</span>
+                <span>Admin</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </button>
               
               <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                <router-link v-if="user?.is_superuser" to="/admin/plans" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  {{ $t('admin.plans.title') }}
-                </router-link>
+                <div v-if="user?.is_superuser">
+                  <router-link to="/admin/plans" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    {{ $t('admin.plans.title') }}
+                  </router-link>
+                  <button @click="showUsersModal = true" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    {{ $t('admin.users.title') }}
+                  </button>
+                </div>
                 <router-link v-if="!user?.is_superuser" to="/subscription" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   {{ $t('dashboard.subscription.title') }}
                 </router-link>
+                <button @click="showPasswordModal = true" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  {{ $t('dashboard.changePassword') }}
+                </button>
                 <button @click="logout" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   {{ $t('auth.logout') }}
                 </button>
@@ -260,7 +275,7 @@
               </div>
             </button>
             
-            <button class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
+            <button v-if="!user?.is_superuser" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
                   <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -281,6 +296,97 @@
         </div>
       </div>
     </main>
+
+    <!-- Password Change Modal -->
+    <div v-if="showPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('dashboard.changePassword') }}</h3>
+        
+        <form @submit.prevent="changePassword" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Password attuale</label>
+            <input v-model="passwordForm.currentPassword" type="password" required 
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Nuova password</label>
+            <input v-model="passwordForm.newPassword" type="password" required 
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Conferma nuova password</label>
+            <input v-model="passwordForm.confirmPassword" type="password" required 
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div class="flex justify-end space-x-2 pt-4">
+            <button type="button" @click="showPasswordModal = false" 
+                    class="px-4 py-2 text-gray-600 hover:text-gray-800">
+              Annulla
+            </button>
+            <button type="submit" :disabled="passwordChanging"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+              {{ passwordChanging ? 'Aggiornamento...' : 'Cambia Password' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Users Management Modal -->
+    <div v-if="showUsersModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">{{ $t('admin.users.title') }}</h3>
+          <button @click="showUsersModal = false; loadUsers()" 
+                  class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div v-if="usersLoading" class="text-center py-4">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+        
+        <div v-else class="space-y-4">
+          <div v-for="usr in allUsers" :key="usr.id" 
+               class="border border-gray-200 rounded-lg p-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input :value="usr.email" @input="usr.email = $event.target.value"
+                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nome completo</label>
+                <input :value="usr.full_name" @input="usr.full_name = $event.target.value"
+                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+              </div>
+              
+              <div class="flex items-end">
+                <button @click="updateUserEmail(usr.id, usr.email, usr.full_name)"
+                        class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                  Aggiorna
+                </button>
+              </div>
+            </div>
+            
+            <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+              <span>ID: {{ usr.id }}</span>
+              <span :class="usr.is_active ? 'text-green-600' : 'text-red-600'">
+                {{ usr.is_active ? 'Attivo' : 'Inattivo' }}
+              </span>
+              <span v-if="usr.is_superuser" class="text-blue-600">Admin</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -297,6 +403,16 @@ const showUserMenu = ref(false)
 const subscriptionLoading = ref(false)
 const subscribing = ref(false)
 const cancelling = ref(false)
+const showPasswordModal = ref(false)
+const showUsersModal = ref(false)
+const allUsers = ref([])
+const usersLoading = ref(false)
+const passwordForm = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const passwordChanging = ref(false)
 
 const user = computed(() => authStore.user)
 const currentSubscription = computed(() => subscriptionStore.currentSubscription)
@@ -342,6 +458,50 @@ const cancelSubscription = async () => {
     console.error('Cancellation failed:', error)
   } finally {
     cancelling.value = false
+  }
+}
+
+const changePassword = async () => {
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    alert('Le password non corrispondono')
+    return
+  }
+  
+  passwordChanging.value = true
+  try {
+    await authStore.changePassword(passwordForm.value.currentPassword, passwordForm.value.newPassword)
+    showPasswordModal.value = false
+    passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+    alert('Password cambiata con successo')
+  } catch (error) {
+    console.error('Password change failed:', error)
+    alert('Errore nel cambio password')
+  } finally {
+    passwordChanging.value = false
+  }
+}
+
+const loadUsers = async () => {
+  if (!user.value?.is_superuser) return
+  
+  usersLoading.value = true
+  try {
+    allUsers.value = await authStore.getAllUsers()
+  } catch (error) {
+    console.error('Failed to load users:', error)
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+const updateUserEmail = async (userId, newEmail, newFullName) => {
+  try {
+    await authStore.updateUser(userId, { email: newEmail, full_name: newFullName })
+    await loadUsers() // Reload users
+    alert('Utente aggiornato con successo')
+  } catch (error) {
+    console.error('Failed to update user:', error)
+    alert('Errore nell\'aggiornamento utente')
   }
 }
 

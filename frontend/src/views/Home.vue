@@ -1,5 +1,25 @@
 <template>
   <div class="bg-white">
+    <!-- Simple Header for unauthenticated users -->
+    <header class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center">
+            <span class="text-xl font-bold text-primary-600">pgpyfatovutwls</span>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <LanguageSelector />
+            <button @click="showLoginModal = true" class="btn btn-secondary">
+              {{ $t('auth.login') }}
+            </button>
+            <button @click="showRegisterModal = true" class="btn btn-primary">
+              {{ $t('auth.register') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
     <!-- Hero Section -->
     <div class="relative isolate px-6 pt-14 lg:px-8">
       <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
@@ -178,6 +198,7 @@
 import { ref } from 'vue'
 import LoginModal from '../components/LoginModal.vue'
 import RegisterModal from '../components/RegisterModal.vue'
+import LanguageSelector from '../components/LanguageSelector.vue'
 
 const showLoginModal = ref(false)
 const showRegisterModal = ref(false)

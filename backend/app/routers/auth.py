@@ -34,6 +34,16 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class AdminUpdateUserRequest(BaseModel):
+    email: str
+    full_name: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -117,4 +127,66 @@ async def update_current_user(
     await User.filter(id=current_user.id).update(**update_data)
     updated_user = await User.get(id=current_user.id)
     
+    return UserResponse.from_orm(updated_user)
+
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Change current user password"""
+    # Verify current password
+    if not current_user.check_password(request.current_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Update password
+    hashed_password = User.get_password_hash(request.new_password)
+    await User.filter(id=current_user.id).update(hashed_password=hashed_password)
+    
+    return {"message": "Password changed successfully"}
+
+
+@router.get("/users", response_model=list[UserResponse])
+async def get_all_users(current_user: User = Depends(get_current_active_user)):
+    """Get all users (admin only)"""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can access this endpoint"
+        )
+    
+    users = await User.all()
+    return [UserResponse.from_orm(user) for user in users]
+
+
+@router.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(
+    user_id: int,
+    request: AdminUpdateUserRequest,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update user (admin only)"""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can access this endpoint"
+        )
+    
+    user = await User.filter(id=user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    await User.filter(id=user_id).update(
+        email=request.email,
+        full_name=request.full_name
+    )
+    
+    updated_user = await User.get(id=user_id)
     return UserResponse.from_orm(updated_user)

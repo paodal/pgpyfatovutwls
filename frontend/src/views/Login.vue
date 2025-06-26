@@ -1,5 +1,24 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen bg-gray-50">
+    <!-- Simple Header -->
+    <header class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center">
+            <router-link to="/" class="text-xl font-bold text-primary-600">pgpyfatovutwls</router-link>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <LanguageSelector />
+            <router-link to="/register" class="btn btn-primary">
+              {{ $t('auth.register') }}
+            </router-link>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -58,12 +77,14 @@
         </div>
       </form>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import LanguageSelector from '../components/LanguageSelector.vue'
 
 const authStore = useAuthStore()
 

@@ -199,6 +199,7 @@
     "current_plan": "Piano attuale",
     "no_subscription": "Nessun abbonamento attivo", 
     "manage_subscription": "Gestisci abbonamento",
+    "changePassword": "Cambia Password",
     "stats": {
       "projects": "Progetti",
       "storage_used": "Storage utilizzato",

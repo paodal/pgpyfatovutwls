@@ -71,12 +71,30 @@
     }
   },
   "dashboard": {
+    "title": "Dashboard",
     "welcome": "Welcome",
     "subtitle": "Here's an overview of your account.",
+    "profile": {
+      "title": "Profile",
+      "active": "Active",
+      "inactive": "Inactive",
+      "superuser": "Super Admin"
+    },
+    "subscription": {
+      "title": "Subscription",
+      "status": "Status",
+      "noSubscription": "No subscription",
+      "upgradeMessage": "Upgrade your plan to unlock all features",
+      "subscribe": "Subscribe",
+      "subscribing": "Subscribing...",
+      "cancel": "Cancel",
+      "cancelling": "Cancelling..."
+    },
     "subscription_status": "Subscription status",
     "current_plan": "Current plan",
     "no_subscription": "No active subscription",
     "manage_subscription": "Manage subscription",
+    "changePassword": "Change Password",
     "stats": {
       "projects": "Projects",
       "storage_used": "Storage used",
@@ -92,6 +110,25 @@
       "get_support": "Support",
       "get_support_desc": "Get assistance"
     }
+  },
+  "admin": {
+    "panel": {
+      "title": "Admin Panel"
+    },
+    "plans": {
+      "title": "Plans Management",
+      "description": "Manage available subscription plans",
+      "manage": "Manage"
+    },
+    "users": {
+      "title": "Users Management",
+      "description": "Manage registered users"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "View statistics and metrics"
+    },
+    "comingSoon": "Coming Soon"
   },
   "subscription": {
     "title": "Subscription management",

@@ -91,6 +91,39 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      await axios.post('/v1/auth/change-password', {
+        current_password: currentPassword,  
+        new_password: newPassword
+      })
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Password change failed'
+      throw new Error(message)
+    }
+  }
+
+  const getAllUsers = async () => {
+    try {
+      const response = await axios.get('/v1/auth/users')
+      return response.data
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to load users'
+      throw new Error(message)
+    }
+  }
+
+  const updateUser = async (userId, userData) => {
+    try {
+      const response = await axios.put(`/v1/auth/users/${userId}`, userData)
+      return response.data
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to update user'
+      throw new Error(message)
+    }
+  }
+
   return {
     user,
     token,
@@ -99,6 +132,9 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     checkAuthStatus,
-    updateProfile
+    updateProfile,
+    changePassword,
+    getAllUsers,
+    updateUser
   }
 })
