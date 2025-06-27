@@ -85,6 +85,19 @@ jobs:
           frontend:
             ports:
               - "8004:80"
+          # Disable monitoring services to avoid port conflicts
+          prometheus:
+            deploy:
+              replicas: 0
+          grafana:
+            deploy:
+              replicas: 0
+          loki:
+            deploy:
+              replicas: 0
+          promtail:
+            deploy:
+              replicas: 0
         EOF
         
     - name: Build and deploy with Docker Compose
@@ -160,6 +173,11 @@ jobs:
         
         sudo ln -sf /etc/nginx/sites-available/pgpyfatovutwls-prod /etc/nginx/sites-enabled/
         sudo nginx -t && sudo systemctl reload nginx
+        
+    - name: Setup SSL certificate
+      run: |
+        # Setup SSL for production only
+        sudo certbot --nginx -d pgpyfatovutwls.europeople.net --non-interactive --agree-tos --email admin@europeople.net || echo "SSL setup failed, continuing without SSL"
         
     - name: Cleanup old backups
       run: |
