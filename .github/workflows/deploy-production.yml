@@ -85,28 +85,46 @@ jobs:
           frontend:
             ports:
               - "8004:80"
-          # Disable monitoring services to avoid port conflicts
-          prometheus:
-            deploy:
-              replicas: 0
-          grafana:
-            deploy:
-              replicas: 0
-          loki:
-            deploy:
-              replicas: 0
-          promtail:
-            deploy:
-              replicas: 0
+        EOF
+        
+        # Create minimal docker-compose for production (no monitoring)
+        cat > docker-compose.prod.yml << EOF
+        version: '3.8'
+        services:
+          backend:
+            build:
+              context: ./backend
+              dockerfile: Dockerfile
+            environment:
+              - DATABASE_URL=postgres://pgpyfatovutwls_user:aquila-vita-casa@host.docker.internal:5432/pgpyfatovutwls_db
+              - SECRET_KEY=porta-terra-cielo-ponte-mare-stella-sole-luna
+              - DEBUG=false
+              - SMTP_PASSWORD=\${GMAIL_PASSPHRASE:-}
+              - LEMON_SQUEEZY_API_KEY=\${LS_API_KEY:-}
+              - SENTRY_DSN=\${SENTRY_DSN:-}
+            ports:
+              - "8003:8000"
+            volumes:
+              - ./backend:/app
+            command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+          frontend:
+            build:
+              context: ./frontend
+              dockerfile: Dockerfile
+            ports:
+              - "8004:80"
+            depends_on:
+              - backend
         EOF
         
     - name: Build and deploy with Docker Compose
       run: |
         cd /opt/apps/pgpyfatovutwls_prod
         
-        # Use modern docker compose (without hyphen)
-        docker compose down || true
-        docker compose up -d --build
+        # Use production docker-compose file (no monitoring services)
+        docker compose -f docker-compose.prod.yml down || true
+        docker compose -f docker-compose.prod.yml up -d --build
         
           
     - name: Wait for application to start
