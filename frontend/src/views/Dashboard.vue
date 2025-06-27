@@ -29,7 +29,7 @@
                   <router-link to="/admin/plans" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     {{ $t('admin.plans.title') }}
                   </router-link>
-                  <button @click="showUsersModal = true" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <button @click="openUsersModal" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     {{ $t('admin.users.title') }}
                   </button>
                 </div>
@@ -204,8 +204,8 @@
                         {{ $t('admin.users.description') }}
                       </p>
                     </div>
-                    <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
-                      {{ $t('admin.comingSoon') }}
+                    <button @click="openUsersModal" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      {{ $t('admin.users.manage') }}
                     </button>
                   </div>
                 </div>
@@ -337,10 +337,16 @@
 
     <!-- Users Management Modal -->
     <div v-if="showUsersModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+      <div class="bg-white rounded-lg p-6 w-full min-w-[640px] max-w-5xl max-h-[80vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium text-gray-900">{{ $t('admin.users.title') }}</h3>
-          <button @click="showUsersModal = false; loadUsers()" 
+          <div class="flex items-center space-x-4">
+            <h3 class="text-lg font-medium text-gray-900">{{ $t('admin.users.title') }}</h3>
+            <button @click="openCreateUserModal" 
+                    class="bg-green-600 text-white px-4 py-2 text-sm rounded-md hover:bg-green-700">
+              + Crea Nuovo Utente
+            </button>
+          </div>
+          <button @click="showUsersModal = false" 
                   class="text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -352,39 +358,181 @@
           <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
         
-        <div v-else class="space-y-4">
+        <div v-else class="space-y-3">
           <div v-for="usr in allUsers" :key="usr.id" 
-               class="border border-gray-200 rounded-lg p-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
-                <input :value="usr.email" @input="usr.email = $event.target.value"
-                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+               :class="[
+                 'border rounded-lg p-4 bg-white',
+                 usr.is_superuser ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+               ]">
+            
+            <!-- User Info and Controls -->
+            <div class="grid grid-cols-12 gap-3">
+              <!-- Basic Info (6 columns) -->
+              <div class="col-span-6">
+                <div class="space-y-2">
+                  <!-- Status Toggles -->
+                  <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-500">ID: {{ usr.id }}</span>
+                    <div class="flex items-center space-x-1">
+                      <input type="checkbox" v-model="usr.is_active" @change="updateUserStatus(usr)"
+                             class="h-3 w-3 text-green-600 border-gray-300 rounded">
+                      <span class="text-xs text-green-600">Attivo</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <input type="checkbox" v-model="usr.is_superuser" @change="updateUserStatus(usr)"
+                             class="h-3 w-3 text-blue-600 border-gray-300 rounded">
+                      <span class="text-xs text-blue-600">Admin</span>
+                    </div>
+                  </div>
+                  <!-- User Fields -->
+                  <input :value="usr.email" @input="usr.email = $event.target.value"
+                         class="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                         placeholder="Email">
+                  <input :value="usr.full_name" @input="usr.full_name = $event.target.value"
+                         class="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                         placeholder="Nome completo">
+                </div>
               </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Nome completo</label>
-                <input :value="usr.full_name" @input="usr.full_name = $event.target.value"
-                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+
+              <!-- Subscription Section (4 columns) -->
+              <div v-if="!usr.is_superuser" class="col-span-4">
+                <div class="space-y-2">
+                  <div class="text-xs font-medium text-gray-700">Abbonamento</div>
+                  <select v-model="usr.selectedPlanId" class="text-xs border border-gray-300 rounded px-2 py-1 w-full">
+                    <option value="">Nessun Piano</option>
+                    <option v-for="plan in availablePlans" :key="plan.id" :value="plan.id">
+                      {{ plan.name }} - €{{ plan.price }}
+                    </option>
+                  </select>
+                </div>
               </div>
-              
-              <div class="flex items-end">
-                <button @click="updateUserEmail(usr.id, usr.email, usr.full_name)"
-                        class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
-                  Aggiorna
+              <div v-else class="col-span-4">
+                <div class="text-xs text-blue-600 font-medium">Utente Amministratore</div>
+              </div>
+
+              <!-- Action Buttons (2 columns) -->
+              <div class="col-span-2 flex flex-col space-y-1">
+                <button @click="openChangePasswordModal(usr)"
+                        class="px-2 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600">
+                  Password
+                </button>
+                <button @click="deleteUserAccount(usr.id, usr.full_name)"
+                        class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">
+                  Rimuovi
                 </button>
               </div>
             </div>
             
-            <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-              <span>ID: {{ usr.id }}</span>
-              <span :class="usr.is_active ? 'text-green-600' : 'text-red-600'">
-                {{ usr.is_active ? 'Attivo' : 'Inattivo' }}
-              </span>
-              <span v-if="usr.is_superuser" class="text-blue-600">Admin</span>
+            <!-- Save Button (Separate, larger) -->
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <button @click="updateUserStatus(usr)"
+                      class="w-full px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 font-medium">
+                Salva Modifiche
+              </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- User Password Change Modal -->
+    <div v-if="showUserPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Cambia Password per {{ selectedUser?.full_name }}
+        </h3>
+        
+        <form @submit.prevent="changeUserPassword" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Nuova password</label>
+            <input v-model="userPasswordForm.newPassword" type="password" required 
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Conferma nuova password</label>
+            <input v-model="userPasswordForm.confirmPassword" type="password" required 
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div class="flex justify-end space-x-2 pt-4">
+            <button type="button" @click="showUserPasswordModal = false" 
+                    class="px-4 py-2 text-gray-600 hover:text-gray-800">
+              Annulla
+            </button>
+            <button type="submit" :disabled="userPasswordChanging"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+              {{ userPasswordChanging ? 'Aggiornamento...' : 'Cambia Password' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div v-if="showCreateUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Crea Nuovo Utente</h3>
+        
+        <form @submit.prevent="createUser" class="space-y-4" :key="createUserFormKey">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input v-model="createUserForm.email" type="email" required autocomplete="off"
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Nome completo</label>
+            <input v-model="createUserForm.full_name" type="text" required autocomplete="off"
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Password</label>
+            <input v-model="createUserForm.password" type="password" required autocomplete="new-password"
+                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Lingua</label>
+            <select v-model="createUserForm.language" 
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+              <option value="it">Italiano</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center">
+            <input v-model="createUserForm.is_superuser" type="checkbox" 
+                   class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+            <label class="ml-2 block text-sm text-gray-700">
+              Amministratore
+            </label>
+          </div>
+          
+          <!-- Subscription Section (only for non-admin users) -->
+          <div v-if="!createUserForm.is_superuser">
+            <label class="block text-sm font-medium text-gray-700">Abbonamento (opzionale)</label>
+            <select v-model="createUserForm.selectedPlanId" 
+                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+              <option value="">Nessun abbonamento</option>
+              <option v-for="plan in availablePlans" :key="plan.id" :value="plan.id">
+                {{ plan.name }} - €{{ plan.price }}/mese
+              </option>
+            </select>
+          </div>
+          
+          <div class="flex justify-end space-x-2 pt-4">
+            <button type="button" @click="closeCreateUserModal" 
+                    class="px-4 py-2 text-gray-600 hover:text-gray-800">
+              Annulla
+            </button>
+            <button type="submit" :disabled="userCreating"
+                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50">
+              {{ userCreating ? 'Creazione...' : 'Crea Utente' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -405,14 +553,33 @@ const subscribing = ref(false)
 const cancelling = ref(false)
 const showPasswordModal = ref(false)
 const showUsersModal = ref(false)
+const showUserPasswordModal = ref(false)
+const showCreateUserModal = ref(false)
+const createUserFormKey = ref(0)
 const allUsers = ref([])
 const usersLoading = ref(false)
+const userCreating = ref(false)
+const selectedUser = ref(null)
+const availablePlans = ref([])
+const createUserForm = ref({
+  email: '',
+  full_name: '',
+  password: '',
+  language: 'it',
+  is_superuser: false,
+  selectedPlanId: ''
+})
 const passwordForm = ref({
   currentPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
+const userPasswordForm = ref({
+  newPassword: '',
+  confirmPassword: ''
+})
 const passwordChanging = ref(false)
+const userPasswordChanging = ref(false)
 
 const user = computed(() => authStore.user)
 const currentSubscription = computed(() => subscriptionStore.currentSubscription)
@@ -426,6 +593,7 @@ onMounted(async () => {
     subscriptionStore.fetchCurrentSubscription(),
     subscriptionStore.fetchPlans()
   ])
+  availablePlans.value = subscriptionStore.plans
   subscriptionLoading.value = false
 })
 
@@ -481,12 +649,21 @@ const changePassword = async () => {
   }
 }
 
+const openUsersModal = async () => {
+  showUsersModal.value = true
+  await loadUsers()
+}
+
 const loadUsers = async () => {
   if (!user.value?.is_superuser) return
   
   usersLoading.value = true
   try {
     allUsers.value = await authStore.getAllUsers()
+    // Initialize selectedPlanId for each user
+    allUsers.value.forEach(usr => {
+      usr.selectedPlanId = usr.subscription?.plan_id || ''
+    })
   } catch (error) {
     console.error('Failed to load users:', error)
   } finally {
@@ -494,14 +671,139 @@ const loadUsers = async () => {
   }
 }
 
-const updateUserEmail = async (userId, newEmail, newFullName) => {
+
+const updateUserStatus = async (usr) => {
   try {
-    await authStore.updateUser(userId, { email: newEmail, full_name: newFullName })
+    // Update user basic info
+    await authStore.updateUser(usr.id, { 
+      email: usr.email, 
+      full_name: usr.full_name,
+      is_superuser: usr.is_superuser,
+      is_active: usr.is_active
+    })
+    
+    // Handle subscription changes (only for non-admin users)
+    if (!usr.is_superuser) {
+      const currentSubscriptionId = usr.subscription?.plan_id
+      const selectedPlanId = usr.selectedPlanId
+      
+      // If subscription changed
+      if (currentSubscriptionId !== selectedPlanId) {
+        if (selectedPlanId === '' || selectedPlanId === null) {
+          // Cancel subscription if "Nessun Piano" selected
+          if (currentSubscriptionId) {
+            await authStore.cancelUserSubscription(usr.id)
+          }
+        } else {
+          // Set new subscription
+          await authStore.setUserSubscription(usr.id, selectedPlanId)
+        }
+      }
+    }
+    
     await loadUsers() // Reload users
-    alert('Utente aggiornato con successo')
+    alert(`Utente ${usr.full_name} aggiornato con successo`)
   } catch (error) {
     console.error('Failed to update user:', error)
     alert('Errore nell\'aggiornamento utente')
+    // Reload to revert changes
+    await loadUsers()
+  }
+}
+
+const openChangePasswordModal = (user) => {
+  selectedUser.value = user
+  userPasswordForm.value = { newPassword: '', confirmPassword: '' }
+  showUserPasswordModal.value = true
+}
+
+const changeUserPassword = async () => {
+  if (userPasswordForm.value.newPassword !== userPasswordForm.value.confirmPassword) {
+    alert('Le password non corrispondono')
+    return
+  }
+  
+  userPasswordChanging.value = true
+  try {
+    await authStore.adminChangePassword(selectedUser.value.id, userPasswordForm.value.newPassword)
+    showUserPasswordModal.value = false
+    alert('Password utente cambiata con successo')
+  } catch (error) {
+    console.error('Failed to change user password:', error)
+    alert('Errore nel cambio password utente')
+  } finally {
+    userPasswordChanging.value = false
+  }
+}
+
+const deleteUserAccount = async (userId, userName) => {
+  if (!confirm(`Sei sicuro di voler eliminare l'utente ${userName}? Questa azione non può essere annullata.`)) {
+    return
+  }
+  
+  try {
+    await authStore.deleteUser(userId)
+    await loadUsers()
+    alert('Utente eliminato con successo')
+  } catch (error) {
+    console.error('Failed to delete user:', error)
+    alert('Errore nell\'eliminazione utente')
+  }
+}
+
+
+const openCreateUserModal = () => {
+  // Reset form to empty values and force re-render
+  createUserForm.value = {
+    email: '',
+    full_name: '',
+    password: '',
+    language: 'it',
+    is_superuser: false,
+    selectedPlanId: ''
+  }
+  createUserFormKey.value++
+  showCreateUserModal.value = true
+}
+
+const closeCreateUserModal = () => {
+  // Reset form when closing
+  createUserForm.value = {
+    email: '',
+    full_name: '',
+    password: '',
+    language: 'it',
+    is_superuser: false,
+    selectedPlanId: ''
+  }
+  createUserFormKey.value++
+  showCreateUserModal.value = false
+}
+
+const createUser = async () => {
+  userCreating.value = true
+  try {
+    // Create the user first
+    const newUser = await authStore.createUser(createUserForm.value)
+    
+    // If a subscription plan is selected and user is not admin, assign the subscription
+    if (createUserForm.value.selectedPlanId && !createUserForm.value.is_superuser) {
+      try {
+        await authStore.setUserSubscription(newUser.id, createUserForm.value.selectedPlanId)
+      } catch (subscriptionError) {
+        console.error('Failed to set subscription:', subscriptionError)
+        alert('Utente creato con successo, ma errore nell\'assegnazione abbonamento')
+      }
+    }
+    
+    closeCreateUserModal()
+    await loadUsers()
+    alert('Utente creato con successo')
+  } catch (error) {
+    console.error('Failed to create user:', error)
+    alert('Errore nella creazione utente')
+  } finally {
+    userCreating.value = false
   }
 }
 

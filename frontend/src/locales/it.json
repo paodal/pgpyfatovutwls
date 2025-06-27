@@ -167,7 +167,8 @@
     },
     "users": {
       "title": "Gestione Utenti",
-      "description": "Gestisci gli utenti registrati"
+      "description": "Gestisci gli utenti registrati",
+      "manage": "Gestisci"
     },
     "analytics": {
       "title": "Analytics",

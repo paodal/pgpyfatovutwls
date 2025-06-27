@@ -124,6 +124,62 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const adminChangePassword = async (userId, newPassword) => {
+    try {
+      await axios.post('/v1/auth/admin/change-password', {
+        user_id: userId,
+        new_password: newPassword
+      })
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to change password'
+      throw new Error(message)
+    }
+  }
+
+  const deleteUser = async (userId) => {
+    try {
+      await axios.delete(`/v1/auth/users/${userId}`)
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to delete user'
+      throw new Error(message)
+    }
+  }
+
+  const setUserSubscription = async (userId, planId) => {
+    try {
+      await axios.post('/v1/auth/admin/set-subscription', {
+        user_id: userId,
+        plan_id: planId
+      })
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to set subscription'
+      throw new Error(message)
+    }
+  }
+
+  const cancelUserSubscription = async (userId) => {
+    try {
+      await axios.delete(`/v1/auth/admin/cancel-subscription/${userId}`)
+      return { success: true }
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to cancel subscription'
+      throw new Error(message)
+    }
+  }
+
+  const createUser = async (userData) => {
+    try {
+      const response = await axios.post('/v1/auth/admin/create-user', userData)
+      return response.data
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to create user'
+      throw new Error(message)
+    }
+  }
+
   return {
     user,
     token,
@@ -135,6 +191,11 @@ export const useAuthStore = defineStore('auth', () => {
     updateProfile,
     changePassword,
     getAllUsers,
-    updateUser
+    updateUser,
+    adminChangePassword,
+    deleteUser,
+    setUserSubscription,
+    cancelUserSubscription,
+    createUser
   }
 })
