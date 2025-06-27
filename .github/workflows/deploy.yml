@@ -32,8 +32,10 @@ jobs:
       run: |
         sudo mkdir -p /opt/apps/pgpyfatovutwls_staging
         sudo mkdir -p /opt/repos/pgpyfatovutwls
+        sudo mkdir -p /opt/backups
         sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_staging
         sudo chown -R gha:gha /opt/repos/pgpyfatovutwls
+        sudo chown -R gha:gha /opt/backups
         
     - name: Backup current deployment
       run: |
@@ -71,13 +73,27 @@ jobs:
         DEBUG=true
         EOF
         
+    - name: Create staging Docker Compose override
+      run: |
+        cd /opt/apps/pgpyfatovutwls_staging
+        cat > docker-compose.override.yml << EOF
+        version: '3.8'
+        services:
+          backend:
+            ports:
+              - "9003:8000"
+          frontend:
+            ports:
+              - "9004:80"
+        EOF
+        
     - name: Build and deploy with Docker Compose
       run: |
         cd /opt/apps/pgpyfatovutwls_staging
         
-        
-          docker-compose down || true
-          docker-compose up -d --build
+        # Use modern docker compose (without hyphen)
+        docker compose down || true
+        docker compose up -d --build
         
           
     - name: Wait for application to start
@@ -178,8 +194,8 @@ jobs:
           sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_staging
           
           cd /opt/apps/pgpyfatovutwls_staging
-          docker-compose down || true
-          docker-compose up -d || true
+          docker compose down || true
+          docker compose up -d || true
           
           echo "✅ Rollback completed"
         else
