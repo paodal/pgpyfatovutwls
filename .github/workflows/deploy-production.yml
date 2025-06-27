@@ -32,8 +32,10 @@ jobs:
       run: |
         sudo mkdir -p /opt/apps/pgpyfatovutwls_prod
         sudo mkdir -p /opt/repos/pgpyfatovutwls
+        sudo mkdir -p /opt/backups
         sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_prod
         sudo chown -R gha:gha /opt/repos/pgpyfatovutwls
+        sudo chown -R gha:gha /opt/backups
         
     - name: Backup current deployment
       run: |
@@ -101,77 +103,62 @@ jobs:
         
     - name: Health check
       run: |
-        max_attempts=20
+        max_attempts=30
         attempt=1
         health_port=8003
-        
-        echo "🔍 Starting health check for port $health_port"
         
         while [ $attempt -le $max_attempts ]; do
           echo "Health check attempt $attempt/$max_attempts"
           
-          # Test multiple endpoints for better reliability
           if curl -f -s http://localhost:$health_port/health > /dev/null 2>&1; then
             echo "✅ Application is healthy!"
-            break
-          elif curl -f -s http://localhost:$health_port/ > /dev/null 2>&1; then
-            echo "✅ Application root endpoint responding!"
-            break
-          elif curl -f -s http://localhost:$health_port/docs > /dev/null 2>&1; then
-            echo "✅ Application docs endpoint responding!"
             break
           fi
           
           if [ $attempt -eq $max_attempts ]; then
             echo "❌ Health check failed after $max_attempts attempts"
-            echo "🔍 Container status:"
-            docker compose ps
-            echo "🔍 Container logs:"
-            docker compose logs --tail 20
-            echo "🔍 Manual test endpoints:"
-            curl -I http://localhost:$health_port/health || true
-            curl -I http://localhost:$health_port/ || true
             exit 1
           fi
           
-          echo "Waiting 15 seconds before next attempt..."
-          sleep 15
+          echo "Waiting 10 seconds before next attempt..."
+          sleep 10
           attempt=$((attempt + 1))
         done
         
     - name: Update Nginx configuration
       run: |
         sudo tee /etc/nginx/sites-available/pgpyfatovutwls-prod > /dev/null << 'EOF'
-server {
-    listen 80;
-    server_name pgpyfatovutwls.europeople.net;
-    
-    # Frontend - serve static files and handle SPA routing
-    location / {
-        proxy_pass http://localhost:8004;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # Backend API routes
-    location /api/ {
-        proxy_pass http://localhost:8003/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # Health check (backend)
-    location /health {
-        proxy_pass http://localhost:8003/health;
-        access_log off;
-    }
-}
+        server {
+            listen 80;
+            server_name pgpyfatovutwls.europeople.net;
+            
+            # Frontend - serve static files and handle SPA routing
+            location / {
+                proxy_pass http://localhost:8004;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            # Backend API routes
+            location /api/ {
+                proxy_pass http://localhost:8003/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            # Health check (backend)
+            location /health {
+                proxy_pass http://localhost:8003/health;
+                access_log off;
+            }
+        }
         EOF
         
+        sudo ln -sf /etc/nginx/sites-available/pgpyfatovutwls-prod /etc/nginx/sites-enabled/
         sudo nginx -t && sudo systemctl reload nginx
         
     - name: Cleanup old backups
