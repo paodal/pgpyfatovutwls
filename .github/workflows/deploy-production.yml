@@ -96,7 +96,7 @@ jobs:
               context: ./backend
               dockerfile: Dockerfile
             environment:
-              - DATABASE_URL=postgres://pgpyfatovutwls_user:aquila-vita-casa@host.docker.internal:5432/pgpyfatovutwls_db
+              - DATABASE_URL=postgres://pgpyfatovutwls_user:aquila-vita-casa@localhost:5432/pgpyfatovutwls_db
               - SECRET_KEY=porta-terra-cielo-ponte-mare-stella-sole-luna
               - DEBUG=false
               - SMTP_PASSWORD=\${GMAIL_PASSPHRASE:-}
