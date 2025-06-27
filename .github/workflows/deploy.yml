@@ -1,199 +1,193 @@
-name: Deploy pgpyfatovutwls
+name: Deploy pgpyfatovutwls to Staging
 
 on:
   push:
-    branches: [ develop, main ]
-  pull_request:
-    branches: [ develop, main ]
+    branches: [develop]
+    paths:
+      - '**'
+  workflow_dispatch:
 
 env:
   APP_NAME: pgpyfatovutwls
-  STAGING_PORT: 9003
-  PRODUCTION_PORT: 8003
+  ENVIRONMENT: staging
+  BACKEND_PORT: 9003
+  FRONTEND_PORT: 9004
+  DOMAIN: test.pgpyfatovutwls.europeople.net
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: aquila-vita-casa
-          POSTGRES_USER: pgpyfatovutwls_user
-          POSTGRES_DB: pgpyfatovutwls_test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
-
-    - name: Install backend dependencies
-      working-directory: ./backend
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Run backend tests
-      working-directory: ./backend
-      env:
-        DATABASE_URL: postgres://pgpyfatovutwls_user:aquila-vita-casa@localhost:5432/pgpyfatovutwls_test_db
-        SECRET_KEY: test-secret-key
-      run: |
-        python -m pytest tests/ -v || echo "No tests found"
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-
-    - name: Install frontend dependencies
-      working-directory: ./frontend
-      run: npm ci
-
-    - name: Build frontend
-      working-directory: ./frontend
-      run: npm run build
-
-    - name: Run frontend tests
-      working-directory: ./frontend
-      run: npm test || echo "No tests found"
-
   deploy:
-    needs: test
     runs-on: self-hosted
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
-
+    
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set environment variables
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up environment variables
       run: |
-        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          echo "ENVIRONMENT=production" >> $GITHUB_ENV
-          echo "PORT=${{ env.PRODUCTION_PORT }}" >> $GITHUB_ENV
-          echo "DOMAIN=pgpyfatovutwls.europeople.net" >> $GITHUB_ENV
-        else
-          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-          echo "PORT=${{ env.STAGING_PORT }}" >> $GITHUB_ENV
-          echo "DOMAIN=test.pgpyfatovutwls.europeople.net" >> $GITHUB_ENV
+        echo "DEPLOYMENT_ID=${{ github.run_id }}" >> $GITHUB_ENV
+        echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+        echo "BRANCH_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+        
+    - name: Create deployment directory
+      run: |
+        sudo mkdir -p /opt/apps/pgpyfatovutwls_staging
+        sudo mkdir -p /opt/repos/pgpyfatovutwls
+        sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_staging
+        sudo chown -R gha:gha /opt/repos/pgpyfatovutwls
+        
+    - name: Backup current deployment
+      run: |
+        if [ -d "/opt/apps/pgpyfatovutwls_staging" ]; then
+          sudo cp -r /opt/apps/pgpyfatovutwls_staging /opt/backups/pgpyfatovutwls_staging-backup-$(date +%Y%m%d-%H%M%S) || true
         fi
-
-    - name: Create application directory
+        
+    - name: Update repository
       run: |
-        sudo mkdir -p /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
-        sudo chown -R gha:gha /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
-
-    - name: Copy application files
+        cd /opt/repos/pgpyfatovutwls
+        if [ ! -d ".git" ]; then
+          git clone https://github.com/paodal/pgpyfatovutwls.git .
+        else
+          git fetch origin
+          git reset --hard origin/develop
+        fi
+        
+    - name: Copy files to deployment directory
       run: |
-        rsync -av --delete \
-          --exclude='.git' \
-          --exclude='node_modules' \
-          --exclude='__pycache__' \
-          --exclude='.pytest_cache' \
-          . /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}/
-
-    - name: Create production environment file
-      working-directory: /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+        rsync -av --exclude='.git' /opt/repos/pgpyfatovutwls/ /opt/apps/pgpyfatovutwls_staging/
+        
+    - name: Create environment file
       run: |
+        cd /opt/apps/pgpyfatovutwls_staging
         cat > .env << EOF
-        DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@${{ secrets.POSTGRES_HOST }}:5432/${{ secrets.POSTGRES_DB }}
-        SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-        SMTP_PASSWORD=${{ secrets.GMAIL_PASSPHRASE }}
-        LEMON_SQUEEZY_API_KEY=${{ secrets.LS_API_KEY }}
-        DEBUG=false
-        ENVIRONMENT=${{ env.ENVIRONMENT }}
-        PORT=${{ env.PORT }}
+        POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+        POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+        POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+        JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+        GMAIL_PASSPHRASE=${{ secrets.GMAIL_PASSPHRASE }}
+        LS_API_KEY=${{ secrets.LS_API_KEY }}
+        SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+        ENVIRONMENT=staging
+        DEBUG=true
         EOF
-
-    - name: Create production docker-compose file
-      working-directory: /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+        
+    - name: Build and deploy with Docker Compose
       run: |
-        cat > docker-compose.prod.yml << 'EOF'
-        version: '3.8'
+        cd /opt/apps/pgpyfatovutwls_staging
         
-        services:
-          backend:
-            build:
-              context: ./backend
-              dockerfile: Dockerfile
-            environment:
-              - DATABASE_URL=${DATABASE_URL}
-              - SECRET_KEY=${SECRET_KEY}
-              - DEBUG=false
-              - SMTP_PASSWORD=${SMTP_PASSWORD}
-              - LEMON_SQUEEZY_API_KEY=${LEMON_SQUEEZY_API_KEY}
-            ports:
-              - "${{ env.PORT }}:8000"
-            restart: unless-stopped
-            healthcheck:
-              test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-              interval: 30s
-              timeout: 10s
-              retries: 3
-        EOF
-
-    - name: Deploy application
-      working-directory: /opt/apps/${{ env.APP_NAME }}_${{ env.ENVIRONMENT }}
+        
+          docker-compose down || true
+          docker-compose up -d --build
+        
+          
+    - name: Wait for application to start
       run: |
-        # Stop existing containers
-        docker compose -f docker-compose.prod.yml down || true
-        
-        # Build and start new containers
-        docker compose -f docker-compose.prod.yml up -d --build
-        
-        # Wait for health check
+        echo "Waiting for application to start..."
         sleep 30
         
-        # Verify deployment
-        if ! curl -f http://localhost:${{ env.PORT }}/health; then
-          echo "Health check failed, rolling back..."
-          docker compose -f docker-compose.prod.yml down
-          exit 1
-        fi
-
-    - name: Update nginx configuration
+    - name: Health check
       run: |
-        sudo tee /etc/nginx/sites-available/${{ env.DOMAIN }} > /dev/null << 'EOF'
-        server {
-            listen 80;
-            server_name ${{ env.DOMAIN }};
-            
-            location / {
-                proxy_pass http://localhost:${{ env.PORT }};
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
-            
-            location /health {
-                proxy_pass http://localhost:${{ env.PORT }}/health;
-                access_log off;
-            }
-        }
+        max_attempts=30
+        attempt=1
+        health_port=9003
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Health check attempt $attempt/$max_attempts"
+          
+          if curl -f -s http://localhost:$health_port/health > /dev/null 2>&1; then
+            echo "✅ Application is healthy!"
+            break
+          fi
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ Health check failed after $max_attempts attempts"
+            exit 1
+          fi
+          
+          echo "Waiting 10 seconds before next attempt..."
+          sleep 10
+          attempt=$((attempt + 1))
+        done
+        
+    - name: Update Nginx configuration
+      run: |
+        sudo tee /etc/nginx/sites-available/pgpyfatovutwls-staging > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name test.pgpyfatovutwls.europeople.net;
+    
+    # Frontend - serve static files and handle SPA routing
+    location / {
+        proxy_pass http://localhost:9004;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Backend API routes
+    location /api/ {
+        proxy_pass http://localhost:9003/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Health check (backend)
+    location /health {
+        proxy_pass http://localhost:9003/health;
+        access_log off;
+    }
+}
         EOF
         
-        sudo ln -sf /etc/nginx/sites-available/${{ env.DOMAIN }} /etc/nginx/sites-enabled/
-        sudo nginx -t
-        sudo systemctl reload nginx
-
-    - name: Setup SSL certificate
+        sudo nginx -t && sudo systemctl reload nginx
+        
+    - name: Cleanup old backups
       run: |
-        sudo certbot --nginx -d ${{ env.DOMAIN }} --non-interactive --agree-tos --email admin@europeople.net || echo "SSL setup failed, continuing..."
-
-    - name: Cleanup old Docker images
+        find /opt/backups -name "pgpyfatovutwls_staging-backup-*" -type d -mtime +7 -exec rm -rf {} + || true
+        
+    - name: Deployment success notification
       run: |
-        docker image prune -f || true
+        echo "🚀 Deployment completed successfully!"
+        echo "App: pgpyfatovutwls"
+        echo "Environment: staging"
+        echo "Domain: test.pgpyfatovutwls.europeople.net"
+        echo "Port: "
+        echo "Commit: ${{ github.sha }}"
+        
+  rollback:
+    runs-on: self-hosted
+    if: failure()
+    needs: deploy
+    
+    steps:
+    - name: Rollback deployment
+      run: |
+        echo "🔄 Rolling back deployment due to failure..."
+        
+        # Find latest backup
+        BACKUP_DIR=$(ls -1t /opt/backups/pgpyfatovutwls_staging-backup-* 2>/dev/null | head -1)
+        
+        if [ -n "$BACKUP_DIR" ]; then
+          echo "Restoring from backup: $BACKUP_DIR"
+          sudo rm -rf /opt/apps/pgpyfatovutwls_staging
+          sudo cp -r "$BACKUP_DIR" /opt/apps/pgpyfatovutwls_staging
+          sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_staging
+          
+          cd /opt/apps/pgpyfatovutwls_staging
+          docker-compose down || true
+          docker-compose up -d || true
+          
+          echo "✅ Rollback completed"
+        else
+          echo "❌ No backup found for rollback"
+        fi
+        
+    - name: Rollback notification
+      run: |
+        echo "⚠️ Deployment failed and was rolled back"
+        echo "App: pgpyfatovutwls"
+        echo "Environment: staging"
+        echo "Failed commit: ${{ github.sha }}"
