@@ -10,8 +10,8 @@ on:
 env:
   APP_NAME: pgpyfatovutwls
   ENVIRONMENT: production
-  BACKEND_PORT: 8003
-  FRONTEND_PORT: 8004
+  BACKEND_PORT: 8005
+  FRONTEND_PORT: 8006
   DOMAIN: pgpyfatovutwls.europeople.net
 
 jobs:
@@ -81,10 +81,10 @@ jobs:
         services:
           backend:
             ports:
-              - "8003:8000"
+              - "8005:8000"
           frontend:
             ports:
-              - "8004:80"
+              - "8006:80"
         EOF
         
         # Create minimal docker-compose for production (no monitoring)
@@ -103,7 +103,7 @@ jobs:
               - LEMON_SQUEEZY_API_KEY=\${LS_API_KEY:-}
               - SENTRY_DSN=\${SENTRY_DSN:-}
             ports:
-              - "8003:8000"
+              - "8005:8000"
             volumes:
               - ./backend:/app
             command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -113,7 +113,7 @@ jobs:
               context: ./frontend
               dockerfile: Dockerfile
             ports:
-              - "8004:80"
+              - "8006:80"
             depends_on:
               - backend
         EOF
@@ -136,7 +136,7 @@ jobs:
       run: |
         max_attempts=30
         attempt=1
-        health_port=8003
+        health_port=8005
         
         while [ $attempt -le $max_attempts ]; do
           echo "Health check attempt $attempt/$max_attempts"
@@ -165,7 +165,7 @@ jobs:
             
             # Frontend - serve static files and handle SPA routing
             location / {
-                proxy_pass http://localhost:8004;
+                proxy_pass http://localhost:8006;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -174,7 +174,7 @@ jobs:
             
             # Backend API routes
             location /api/ {
-                proxy_pass http://localhost:8003/;
+                proxy_pass http://localhost:8005/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -183,7 +183,7 @@ jobs:
             
             # Health check (backend)
             location /health {
-                proxy_pass http://localhost:8003/health;
+                proxy_pass http://localhost:8005/health;
                 access_log off;
             }
         }
