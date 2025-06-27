@@ -374,3 +374,4 @@ For support and questions:
 # Fix workflow syntax
 # Fix YAML indentation
 # Fix docker compose command
+# Trigger with docker-compose fix
