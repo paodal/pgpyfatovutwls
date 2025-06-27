@@ -71,13 +71,27 @@ jobs:
         DEBUG=false
         EOF
         
+    - name: Create production Docker Compose override
+      run: |
+        cd /opt/apps/pgpyfatovutwls_prod
+        cat > docker-compose.override.yml << EOF
+        version: '3.8'
+        services:
+          backend:
+            ports:
+              - "8003:8000"
+          frontend:
+            ports:
+              - "8004:80"
+        EOF
+        
     - name: Build and deploy with Docker Compose
       run: |
         cd /opt/apps/pgpyfatovutwls_prod
         
-        
-          docker-compose down || true
-          docker-compose up -d --build
+        # Use modern docker compose (without hyphen)
+        docker compose down || true
+        docker compose up -d --build
         
           
     - name: Wait for application to start
@@ -193,8 +207,8 @@ server {
           sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_prod
           
           cd /opt/apps/pgpyfatovutwls_prod
-          docker-compose down || true
-          docker-compose up -d || true
+          docker compose down || true
+          docker compose up -d || true
           
           echo "✅ Rollback completed"
         else
