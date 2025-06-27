@@ -1,0 +1,209 @@
+name: Deploy pgpyfatovutwls to Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**'
+  workflow_dispatch:
+
+env:
+  APP_NAME: pgpyfatovutwls
+  ENVIRONMENT: production
+  BACKEND_PORT: 8003
+  FRONTEND_PORT: 8004
+  DOMAIN: pgpyfatovutwls.europeople.net
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up environment variables
+      run: |
+        echo "DEPLOYMENT_ID=${{ github.run_id }}" >> $GITHUB_ENV
+        echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+        echo "BRANCH_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+        
+    - name: Create deployment directory
+      run: |
+        sudo mkdir -p /opt/apps/pgpyfatovutwls_prod
+        sudo mkdir -p /opt/repos/pgpyfatovutwls
+        sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_prod
+        sudo chown -R gha:gha /opt/repos/pgpyfatovutwls
+        
+    - name: Backup current deployment
+      run: |
+        if [ -d "/opt/apps/pgpyfatovutwls_prod" ]; then
+          sudo cp -r /opt/apps/pgpyfatovutwls_prod /opt/backups/pgpyfatovutwls_prod-backup-$(date +%Y%m%d-%H%M%S) || true
+        fi
+        
+    - name: Update repository
+      run: |
+        cd /opt/repos/pgpyfatovutwls
+        if [ ! -d ".git" ]; then
+          git clone https://github.com/paodal/pgpyfatovutwls.git .
+        else
+          git fetch origin
+          git reset --hard origin/main
+        fi
+        
+    - name: Copy files to deployment directory
+      run: |
+        rsync -av --exclude='.git' /opt/repos/pgpyfatovutwls/ /opt/apps/pgpyfatovutwls_prod/
+        
+    - name: Create environment file
+      run: |
+        cd /opt/apps/pgpyfatovutwls_prod
+        cat > .env << EOF
+        POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+        POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+        POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+        JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+        GMAIL_PASSPHRASE=${{ secrets.GMAIL_PASSPHRASE }}
+        LS_API_KEY=${{ secrets.LS_API_KEY }}
+        SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+        ENVIRONMENT=production
+        DEBUG=false
+        EOF
+        
+    - name: Build and deploy with Docker Compose
+      run: |
+        cd /opt/apps/pgpyfatovutwls_prod
+        
+        
+          docker-compose down || true
+          docker-compose up -d --build
+        
+          
+    - name: Wait for application to start
+      run: |
+        echo "Waiting for application to start..."
+        sleep 30
+        
+    - name: Health check
+      run: |
+        max_attempts=20
+        attempt=1
+        health_port=8003
+        
+        echo "🔍 Starting health check for port $health_port"
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Health check attempt $attempt/$max_attempts"
+          
+          # Test multiple endpoints for better reliability
+          if curl -f -s http://localhost:$health_port/health > /dev/null 2>&1; then
+            echo "✅ Application is healthy!"
+            break
+          elif curl -f -s http://localhost:$health_port/ > /dev/null 2>&1; then
+            echo "✅ Application root endpoint responding!"
+            break
+          elif curl -f -s http://localhost:$health_port/docs > /dev/null 2>&1; then
+            echo "✅ Application docs endpoint responding!"
+            break
+          fi
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ Health check failed after $max_attempts attempts"
+            echo "🔍 Container status:"
+            docker compose ps
+            echo "🔍 Container logs:"
+            docker compose logs --tail 20
+            echo "🔍 Manual test endpoints:"
+            curl -I http://localhost:$health_port/health || true
+            curl -I http://localhost:$health_port/ || true
+            exit 1
+          fi
+          
+          echo "Waiting 15 seconds before next attempt..."
+          sleep 15
+          attempt=$((attempt + 1))
+        done
+        
+    - name: Update Nginx configuration
+      run: |
+        sudo tee /etc/nginx/sites-available/pgpyfatovutwls-prod > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name pgpyfatovutwls.europeople.net;
+    
+    # Frontend - serve static files and handle SPA routing
+    location / {
+        proxy_pass http://localhost:8004;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Backend API routes
+    location /api/ {
+        proxy_pass http://localhost:8003/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Health check (backend)
+    location /health {
+        proxy_pass http://localhost:8003/health;
+        access_log off;
+    }
+}
+        EOF
+        
+        sudo nginx -t && sudo systemctl reload nginx
+        
+    - name: Cleanup old backups
+      run: |
+        find /opt/backups -name "pgpyfatovutwls_prod-backup-*" -type d -mtime +7 -exec rm -rf {} + || true
+        
+    - name: Deployment success notification
+      run: |
+        echo "🚀 Deployment completed successfully!"
+        echo "App: pgpyfatovutwls"
+        echo "Environment: production"
+        echo "Domain: pgpyfatovutwls.europeople.net"
+        echo "Port: "
+        echo "Commit: ${{ github.sha }}"
+        
+  rollback:
+    runs-on: self-hosted
+    if: failure()
+    needs: deploy
+    
+    steps:
+    - name: Rollback deployment
+      run: |
+        echo "🔄 Rolling back deployment due to failure..."
+        
+        # Find latest backup
+        BACKUP_DIR=$(ls -1t /opt/backups/pgpyfatovutwls_prod-backup-* 2>/dev/null | head -1)
+        
+        if [ -n "$BACKUP_DIR" ]; then
+          echo "Restoring from backup: $BACKUP_DIR"
+          sudo rm -rf /opt/apps/pgpyfatovutwls_prod
+          sudo cp -r "$BACKUP_DIR" /opt/apps/pgpyfatovutwls_prod
+          sudo chown -R gha:gha /opt/apps/pgpyfatovutwls_prod
+          
+          cd /opt/apps/pgpyfatovutwls_prod
+          docker-compose down || true
+          docker-compose up -d || true
+          
+          echo "✅ Rollback completed"
+        else
+          echo "❌ No backup found for rollback"
+        fi
+        
+    - name: Rollback notification
+      run: |
+        echo "⚠️ Deployment failed and was rolled back"
+        echo "App: pgpyfatovutwls"
+        echo "Environment: production"
+        echo "Failed commit: ${{ github.sha }}"
