@@ -35,13 +35,16 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 # Initialize Sentry
-if settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        integrations=[FastApiIntegration()],
-        traces_sample_rate=0.1,
-        environment="production" if not settings.DEBUG else "development"
-    )
+if settings.SENTRY_DSN and settings.SENTRY_DSN.strip():
+    try:
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            integrations=[FastApiIntegration()],
+            traces_sample_rate=0.1,
+            environment="production" if not settings.DEBUG else "development"
+        )
+    except Exception as e:
+        logger.warning(f"Failed to initialize Sentry: {e}")
 
 # Prometheus metrics
 REQUEST_COUNT = Counter(
